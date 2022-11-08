@@ -10,6 +10,7 @@ const port = process.env.PORT || 5000;
 // middle wares
 app.use(cors());
 app.use(express.json());
+require("dotenv").config();
 
 app.get("/", (req, res) => {
   res.send("Service review server is running");
@@ -32,6 +33,13 @@ async function run() {
     app.get("/services", async (req, res) => {
       const query = {};
       const cursor = serviceCollection.find(query);
+      const services = await cursor.toArray();
+      res.send(services);
+    });
+    //get 3 data from db
+    app.get("/service", async (req, res) => {
+      const query = {};
+      const cursor = serviceCollection.find(query).limit(3);
       const services = await cursor.toArray();
       res.send(services);
     });
