@@ -1,5 +1,7 @@
 const express = require("express");
 const cors = require("cors");
+const jwt = require("jsonwebtoken");
+
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 
 require("dotenv").config();
@@ -25,13 +27,36 @@ const client = new MongoClient(uri, {
   useUnifiedTopology: true,
   serverApi: ServerApiVersion.v1,
 });
+
+function verifyJWT(req, res, next) {
+  const authHeader = req.headers.authorization;
+
+  if (!authHeader) {
+    return res.status(401).send({ message: "unauthorized access" });
+  }
+  const token = authHeader.split(" ")[1];
+
+  jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, function (err, decoded) {
+    if (err) {
+      return res.status(403).send({ message: "Forbidden access" });
+    }
+    req.decoded = decoded;
+    next();
+  });
+}
 //Function for Creating collection to the database
 async function run() {
   try {
     const serviceCollection = client.db("serviceReview").collection("services");
     const reviewCollection = client.db("serviceReview").collection("reviews");
     const userCollection = client.db("serviceReview").collection("user");
-
+    app.post("/jwt", (req, res) => {
+      const user = req.body;
+      const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, {
+        expiresIn: "120s",
+      });
+      res.send({ token });
+    });
     //get all data from db
     app.get("/services", async (req, res) => {
       const query = {};
@@ -53,25 +78,22 @@ async function run() {
       const result = await serviceCollection.insertOne(services);
       res.send(result);
     });
-    //Get Review
-    app.get("/reviews", async (req, res) => {
-      const query = {};
-      const cursor = reviewCollection.find(query);
-      console.log(cursor);
-      const reviews = await cursor.toArray();
-      res.send(reviews);
-    });
 
     //Get Review by service id
-    app.get("/reviews/:id", async (req, res) => {
+    app.get("/reviews-all/:id", async (req, res) => {
       const id = req.params.id;
-
       const query = { service_id: id };
       const cursor = reviewCollection.find(query);
       const reviews = await cursor.toArray();
       res.send(reviews);
     });
-
+    //Get Review
+    app.get("/reviews-all", async (req, res) => {
+      const query = {};
+      const cursor = reviewCollection.find(query);
+      const reviews = await cursor.toArray();
+      res.send(reviews);
+    });
     //Create Review
     app.post("/reviews", async (req, res) => {
       const reviews = req.body;
@@ -79,10 +101,25 @@ async function run() {
       res.send(result);
     });
 
+    //Get review data from db by email query
+
+    app.get("/reviews", async (req, res) => {
+      const email = req.query.email;
+
+      let query = { email: email };
+      console.log(email);
+      /*  if (req.query.email) {
+        query = { email: req.query.email };
+      } */
+      const cursor = reviewCollection.find(query);
+      const reviews = await cursor.toArray();
+      console.log(reviews);
+      res.send(reviews);
+    });
+
     //Fetch service by id
     app.get(`/services/:id`, async (req, res) => {
       const id = req.params.id;
-      console.log(id);
       const query = { _id: ObjectId(id) };
       const service = await serviceCollection.findOne(query);
       res.send(service);
