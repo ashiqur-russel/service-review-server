@@ -29,6 +29,9 @@ const client = new MongoClient(uri, {
 async function run() {
   try {
     const serviceCollection = client.db("serviceReview").collection("services");
+    const reviewCollection = client.db("serviceReview").collection("reviews");
+    const userCollection = client.db("serviceReview").collection("user");
+
     //get all data from db
     app.get("/services", async (req, res) => {
       const query = {};
@@ -43,9 +46,43 @@ async function run() {
       const services = await cursor.toArray();
       res.send(services);
     });
-    //Fetch service by id
-    app.get("/services/:id", async (req, res) => {
+
+    //Create Service
+    app.post("/services", async (req, res) => {
+      const services = req.body;
+      const result = await serviceCollection.insertOne(services);
+      res.send(result);
+    });
+    //Get Review
+    app.get("/reviews", async (req, res) => {
+      const query = {};
+      const cursor = reviewCollection.find(query);
+      console.log(cursor);
+      const reviews = await cursor.toArray();
+      res.send(reviews);
+    });
+
+    //Get Review by service id
+    app.get("/reviews/:id", async (req, res) => {
       const id = req.params.id;
+
+      const query = { service_id: id };
+      const cursor = reviewCollection.find(query);
+      const reviews = await cursor.toArray();
+      res.send(reviews);
+    });
+
+    //Create Review
+    app.post("/reviews", async (req, res) => {
+      const reviews = req.body;
+      const result = await reviewCollection.insertOne(reviews);
+      res.send(result);
+    });
+
+    //Fetch service by id
+    app.get(`/services/:id`, async (req, res) => {
+      const id = req.params.id;
+      console.log(id);
       const query = { _id: ObjectId(id) };
       const service = await serviceCollection.findOne(query);
       res.send(service);
