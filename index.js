@@ -86,7 +86,7 @@ async function run() {
     app.get("/reviewss-all/:id", async (req, res) => {
       const id = req.params.id;
       const query = { _id: ObjectId(id) };
-      const cursor = reviewCollection.find(query);
+      const cursor = reviewCollection.find(query).sort({ date: -1 });
       const reviews = await cursor.toArray();
       res.send(reviews);
     });
@@ -94,14 +94,14 @@ async function run() {
     app.get("/reviews-all/:id", async (req, res) => {
       const id = req.params.id;
       const query = { service_id: id };
-      const cursor = reviewCollection.find(query);
+      const cursor = reviewCollection.find(query).sort({ date: -1 });
       const reviews = await cursor.toArray();
       res.send(reviews);
     });
     //Get Review
     app.get("/reviews-all", async (req, res) => {
       const query = {};
-      const cursor = reviewCollection.find(query);
+      const cursor = reviewCollection.find(query).sort({ date: -1 });
       const reviews = await cursor.toArray();
       res.send(reviews);
     });
