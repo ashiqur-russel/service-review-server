@@ -79,6 +79,15 @@ async function run() {
       res.send(result);
     });
 
+    //get review by id
+
+    app.get("/reviewss-all/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: ObjectId(id) };
+      const cursor = reviewCollection.find(query);
+      const reviews = await cursor.toArray();
+      res.send(reviews);
+    });
     //Get Review by service id
     app.get("/reviews-all/:id", async (req, res) => {
       const id = req.params.id;
@@ -95,7 +104,7 @@ async function run() {
       res.send(reviews);
     });
     //Create Review
-    app.post("/reviews", async (req, res) => {
+    app.post("/reviews-all", async (req, res) => {
       const reviews = req.body;
       const result = await reviewCollection.insertOne(reviews);
       res.send(result);
@@ -107,10 +116,6 @@ async function run() {
       const email = req.query.email;
 
       let query = { email: email };
-      console.log(email);
-      /*  if (req.query.email) {
-        query = { email: req.query.email };
-      } */
       const cursor = reviewCollection.find(query);
       const reviews = await cursor.toArray();
       console.log(reviews);
@@ -123,6 +128,44 @@ async function run() {
       const query = { _id: ObjectId(id) };
       const service = await serviceCollection.findOne(query);
       res.send(service);
+    });
+
+    //Delete review by specific id
+    app.delete("/reviews-all/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: ObjectId(id) };
+      const result = await reviewCollection.deleteOne(query);
+      res.send(result);
+    });
+
+    //update review
+
+    app.patch("/reviews-all/:id", async (req, res) => {
+      const { id } = req.params;
+
+      try {
+        const result = await reviewCollection.updateOne(
+          { _id: ObjectId(id) },
+          { $set: req.body }
+        );
+
+        if (result.matchedCount) {
+          res.send({
+            success: true,
+            message: `successfully updated ${req.body.name}`,
+          });
+        } else {
+          res.send({
+            success: false,
+            error: "Couldn't update  the product",
+          });
+        }
+      } catch (error) {
+        res.send({
+          success: false,
+          error: error.message,
+        });
+      }
     });
   } finally {
   }
