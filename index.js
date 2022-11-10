@@ -50,6 +50,8 @@ async function run() {
     const serviceCollection = client.db("serviceReview").collection("services");
     const reviewCollection = client.db("serviceReview").collection("reviews");
     const userCollection = client.db("serviceReview").collection("user");
+
+    //Create jwt token and send to client
     app.post("/jwt", (req, res) => {
       const user = req.body;
       const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, {
@@ -112,13 +114,12 @@ async function run() {
 
     //Get review data from db by email query
 
-    app.get("/reviews", async (req, res) => {
+    app.get("/reviews", verifyJWT, async (req, res) => {
       const email = req.query.email;
 
       let query = { email: email };
       const cursor = reviewCollection.find(query);
       const reviews = await cursor.toArray();
-      console.log(reviews);
       res.send(reviews);
     });
 
